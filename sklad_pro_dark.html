@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sklad PRO Dark</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background:#121212; color:#fff; }
+        input, select { margin: 5px; padding: 8px; background:#1e1e1e; color:#fff; border:1px solid #333; }
+        button { padding: 6px 12px; margin: 5px; background:#0a84ff; color:#fff; border:none; cursor:pointer; }
+        button:hover { background:#006be6; }
+        table { margin-top: 20px; border-collapse: collapse; width: 100%; }
+        td, th { border: 1px solid #333; padding: 8px; text-align: center; }
+        th { background:#1e1e1e; }
+    </style>
+</head>
+<body>
+
+<h2>📦 Sklad PRO</h2>
+
+<input id="nazov" placeholder="Názov">
+<select id="kategoria">
+    <option>Mobil</option>
+    <option>Príslušenstvo</option>
+    <option>Servis</option>
+</select>
+<input id="nakup" type="number" placeholder="Nákupná cena">
+<input id="predaj" type="number" placeholder="Predajná cena">
+<input id="kusy" type="number" placeholder="Kusy">
+
+<button onclick="pridaj()">Pridať</button>
+
+<br><br>
+
+<input id="search" placeholder="Hľadať..." onkeyup="zobraz()">
+
+<h3>📊 Prehľad</h3>
+<p>Celkový zisk: <b id="zisk">0</b> €</p>
+<p>Hodnota skladu: <b id="hodnota">0</b> €</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Názov</th>
+            <th>Kategória</th>
+            <th>Nákup</th>
+            <th>Predaj</th>
+            <th>Marža</th>
+            <th>Kusy</th>
+            <th>Akcie</th>
+        </tr>
+    </thead>
+    <tbody id="tabulka"></tbody>
+</table>
+
+<script>
+let data = JSON.parse(localStorage.getItem("sklad")) || [];
+
+function uloz() {
+    localStorage.setItem("sklad", JSON.stringify(data));
+}
+
+function zobraz() {
+    let tab = document.getElementById("tabulka");
+    let filter = document.getElementById("search").value.toLowerCase();
+    tab.innerHTML = "";
+
+    let totalZisk = 0;
+    let totalHodnota = 0;
+
+    data.forEach((item, index) => {
+        if (!item.nazov.toLowerCase().includes(filter)) return;
+
+        let marza = item.predaj - item.nakup;
+        let hodnota = item.predaj * item.kusy;
+
+        totalZisk += marza * item.kusy;
+        totalHodnota += hodnota;
+
+        tab.innerHTML += `
+            <tr>
+                <td>${item.nazov}</td>
+                <td>${item.kategoria}</td>
+                <td>${item.nakup}</td>
+                <td>${item.predaj}</td>
+                <td>${marza}</td>
+                <td>${item.kusy}</td>
+                <td>
+                    <button onclick="edit(${index})">✏️</button>
+                    <button onclick="zmaz(${index})">❌</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("zisk").innerText = totalZisk;
+    document.getElementById("hodnota").innerText = totalHodnota;
+}
+
+function pridaj() {
+    let nazov = document.getElementById("nazov").value;
+    let kategoria = document.getElementById("kategoria").value;
+    let nakup = Number(document.getElementById("nakup").value);
+    let predaj = Number(document.getElementById("predaj").value);
+    let kusy = Number(document.getElementById("kusy").value);
+
+    if (!nazov) return alert("Zadaj názov");
+
+    data.push({nazov, kategoria, nakup, predaj, kusy});
+    uloz();
+    zobraz();
+}
+
+function zmaz(index) {
+    if (confirm("Naozaj zmazať?")) {
+        data.splice(index, 1);
+        uloz();
+        zobraz();
+    }
+}
+
+function edit(index) {
+    let item = data[index];
+
+    let nazov = prompt("Názov:", item.nazov);
+    let kategoria = prompt("Kategória:", item.kategoria);
+    let nakup = prompt("Nákupná cena:", item.nakup);
+    let predaj = prompt("Predajná cena:", item.predaj);
+    let kusy = prompt("Kusy:", item.kusy);
+
+    if (nazov) {
+        data[index] = {
+            nazov,
+            kategoria,
+            nakup: Number(nakup),
+            predaj: Number(predaj),
+            kusy: Number(kusy)
+        };
+        uloz();
+        zobraz();
+    }
+}
+
+zobraz();
+</script>
+
+</body>
+</html>
